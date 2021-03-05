@@ -42,37 +42,18 @@
 #include <queue>
 
 
-struct ZmqApplication {
-    String name;
-    String Uuid;
-    time_t lastSeen;
-    bool alive;
-};
-
 
 //=============================================================================
 /*
  */
-class ZmqInterface    : public GenericProcessor, public Thread
+class ZmqInterface: public GenericProcessor
 {
 public:
-    /** The class constructor, used to initialize any members. */
-    ZmqInterface(const String &processorName = "Zmq Interface");
-    
-    /** The class destructor, used to deallocate memory */
+    ZmqInterface();
     ~ZmqInterface();
     
-    /** Determines whether the processor is treated as a source. */
-    virtual bool isSource()
-    {
-        return false;
-    }
-    
-    /** Determines whether the processor is treated as a sink. */
-    virtual bool isSink()
-    {
-        return false;
-    }
+    virtual bool isSource(){ return false;};
+    virtual bool isSink(){return false;}
     
     /** Defines the functionality of the processor.
      
@@ -86,84 +67,35 @@ public:
      number of continous samples in the current buffer (which may differ from the
      size of the buffer).
      */
-    //virtual void process(AudioSampleBuffer& buffer, MidiBuffer& events);
+
     virtual void process(AudioSampleBuffer& continuousBuffer);
     
-    /** Any variables used by the "process" function _must_ be modified only through
-     this method while data acquisition is active. If they are modified in any
-     other way, the application will crash.  */
-    void setParameter(int parameterIndex, float newValue);
-    
     AudioProcessorEditor* createEditor();
-    
-    bool hasEditor() const
-    {
-        return true;
+    bool hasEditor() const {return true;};
+    bool isReady() const {return true;};
+
+    void setPorts(uint32_t newDataPort){
+        dataPort = newDataPort;
+        closeDataSocket();
+        createDataSocket();
     }
-    
-    void updateSettings();
-    
-    bool isReady();
-    
-    void resetConnections();
-    void run();
-
-    OwnedArray<ZmqApplication> *getApplicationList();
-
-    // TODO void saveCustomParametersToXml(XmlElement* parentElement);
-    // TODO void loadCustomParametersFromXml();
-
-    bool threadRunning ;
-    // TODO void setNewListeningPort(int port);
-#if 0
-    void setPorts(uint32_t newDataPort, uint32_t newListenPort);
     uint32_t getDataPort () const { return dataPort; }
-    uint32_t getListenPort () const { return listenPort; }
-#endif
 
 private:
-    int createContext();
-    void openListenSocket();
-    void openKillSocket();
-    void openPipeOutSocket();
-    int closeListenSocket();
+
     int createDataSocket();
     int closeDataSocket();
 
-    void handleEvent(const EventChannel* eventInfo, const MidiMessage& event, int samplePosition);
-    void handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition);
-    int sendData(float *data, int nChannels, int nSamples, int nRealSamples, 
+    int sendData(AudioSampleBuffer& continuousBuffer, int nRealSamples, 
                  int64 timestamp, int sampleRate);
-    int sendEvent( uint8 type,
-                  int sampleNum,
-                  uint8 eventId,
-                  uint8 eventChannel,
-                  uint8 numBytes,
-                  const uint8* eventData,
-                  int64 timestamp);
-    int sendSpikeEvent(const SpikeChannel* spikeInfo, const MidiMessage &event);
-    
-    int receiveEvents(MidiBuffer &events);
-    void checkForApplications();
-    
-    template<typename T> int sendParam(String name, T value);
 
-    
     void *context;
     void *socket;
-    void *listenSocket;
-    void *controlSocket;
-    void *killSocket;
-    void *pipeInSocket;
-    void *pipeOutSocket;
-    
-    
-    OwnedArray<ZmqApplication> applications;
     
     int flag;
     int messageNumber;
-    int dataPort; //TODO make this editable
-    int listenPort;
+    int dataPort; 
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ZmqInterface);
     
 };
