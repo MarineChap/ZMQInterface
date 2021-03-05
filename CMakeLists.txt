@@ -105,6 +105,10 @@ endif()
 find_library(ZMQ_LIBRARIES NAMES libzmq-v120-mt-4_0_4 zmq zmq-v120-mt-4_0_4)
 find_path(ZMQ_INCLUDE_DIRS zmq.h)
 
+
 target_include_directories(${PLUGIN_NAME} PUBLIC ${ZMQ_INCLUDE_DIRS})
 target_link_libraries(${PLUGIN_NAME} ${ZMQ_LIBRARIES})
 target_compile_definitions(${PLUGIN_NAME} PRIVATE ZEROMQ $<$<PLATFORM_ID:Windows>:_SCL_SECURE_NO_WARNINGS>)
+
+
+target_include_directories( ${PLUGIN_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libs)
