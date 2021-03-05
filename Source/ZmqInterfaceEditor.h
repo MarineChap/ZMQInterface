@@ -49,23 +49,16 @@ class ZmqInterfaceEditor: public GenericEditor
 public:
     ZmqInterfaceEditor(GenericProcessor *parentNode, bool useDefaultParameters);
     virtual ~ZmqInterfaceEditor();
-    void saveCustomParameters(XmlElement *xml);
-    void loadCustomParameters(XmlElement* xml);
-    void refreshListAsync();
-#if 0
-    void setPorts(uint32_t dataPort, uint32_t listenPort, void callback());
+    void setPorts(uint32_t dataPort, void callback());
     void buttonClicked(Button* button) override;
-#endif
+	void startAcquisition() override;
+	void stopAcquisition()  override;
+
 private:
-    //TODO UI components
-    class ZmqInterfaceEditorListBox;
-#if 0
-    TextEditor *dataPortEditor, *listenPortEditor;
+    TextEditor *dataPortEditor;
     TextButton *portButton;
-#endif
-    OwnedArray<ZmqApplication> *getApplicationList();
     ZmqInterface *ZmqProcessor;
-    ZmqInterfaceEditorListBox *listBox;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ZmqInterfaceEditor)
 
     
