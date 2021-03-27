@@ -158,7 +158,10 @@ void ZmqInterface::process(AudioSampleBuffer& buffer)
         createDataSocket();
     
     // current timestamp is at the end of the buffer; we want to send the timestamp of the first sample instead
-    uint64_t firstTs = getTimestamp(0) - getNumSamples(0);
+    
+    uint64_t firstTs = getTimestamp(0);
+    std::cout << firstTs<< std::endl;
+    std::cout <<  getTimestamp(0) << " "<<  getNumSamples(0) << std::endl;
 
     float sampleRate;
 
