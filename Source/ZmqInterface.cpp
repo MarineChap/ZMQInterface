@@ -55,7 +55,7 @@ ZmqInterface::ZmqInterface()
     socket = 0;
     flag = 0;
     messageNumber = 0;
-    dataPort = 5556; //TODO make this editable
+    dataPort = 3335;
 
     setProcessorType(PROCESSOR_TYPE_FILTER);
 }
@@ -98,7 +98,6 @@ int ZmqInterface::closeDataSocket()
     {
         std::cout << "close data socket" << std::endl;
         int rc = zmq_close(socket);
-        jassert(rc==0);
         socket = 0;
     }
     return 0;
@@ -106,7 +105,7 @@ int ZmqInterface::closeDataSocket()
 
 #include "channel_generated.h"
 
-int ZmqInterface::sendData(AudioSampleBuffer& buffer, int nRealSamples,
+void ZmqInterface::sendData(AudioSampleBuffer& buffer, int nRealSamples,
                            int64 timestamp, int sampleRate)
 {
     
@@ -116,19 +115,20 @@ int ZmqInterface::sendData(AudioSampleBuffer& buffer, int nRealSamples,
 
 
     // copy data onto buffers for each configured channel group
-    auto real_data =new std::vector<float>();
+    std::vector<float> real_data;
+    real_data.reserve(nRealSamples*nChannels);
 
     for (auto i=0; i<nChannels; i++) {
 
       auto start_index = buffer.getReadPointer(i);
-      real_data->insert(real_data->end(), start_index,
+      real_data.insert(real_data.end(), start_index,
                         start_index + nRealSamples);
     }
     // Create message
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    auto samples = builder.CreateVector(*real_data);
+    auto samples = builder.CreateVector(real_data);
 
     auto zmqbuffer = CreateContinuousData(builder, samples, nChannels, nRealSamples, timestamp, messageNumber, sampleRate);
     builder.Finish(zmqbuffer);
@@ -139,11 +139,7 @@ int ZmqInterface::sendData(AudioSampleBuffer& buffer, int nRealSamples,
     zmq_msg_init_size(&request, size);
     memcpy(zmq_msg_data(&request), (void *)buf, size);
     int size_m = zmq_msg_send(&request, socket, 0);
-    jassert(size_m);
-    size += size_m;
     zmq_msg_close(&request);
- 
-    return size;
 }
 
 AudioProcessorEditor* ZmqInterface::createEditor()
@@ -160,9 +156,6 @@ void ZmqInterface::process(AudioSampleBuffer& buffer)
     // current timestamp is at the end of the buffer; we want to send the timestamp of the first sample instead
     
     uint64_t firstTs = getTimestamp(0);
-    std::cout << firstTs<< std::endl;
-    std::cout <<  getTimestamp(0) << " "<<  getNumSamples(0) << std::endl;
-
     float sampleRate;
 
     // Simplified sample rate detection (could check channel type or report
@@ -178,8 +171,6 @@ void ZmqInterface::process(AudioSampleBuffer& buffer)
 
     if(getNumSamples(0) > 0){
         sendData(buffer, getNumSamples(0), firstTs, (int)sampleRate);
-       // sendData(buffer.getArrayOfWritePointers(), buffer.getNumChannels(),
-        //    buffer.getNumSamples(), getNumSamples(0), firstTs, (int)sampleRate);
     }
 
 }

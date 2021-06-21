@@ -86,7 +86,7 @@ private:
     int createDataSocket();
     int closeDataSocket();
 
-    int sendData(AudioSampleBuffer& continuousBuffer, int nRealSamples, 
+    void sendData(AudioSampleBuffer& continuousBuffer, int nRealSamples,
                  int64 timestamp, int sampleRate);
 
     void *context;
