@@ -105,6 +105,34 @@ endif()
 find_library(ZMQ_LIBRARIES NAMES libzmq-v120-mt-4_0_4 zmq zmq-v120-mt-4_0_4)
 find_path(ZMQ_INCLUDE_DIRS zmq.h)
 
+include(FetchContent)
+FetchContent_Declare(
+    flatbuffers
+    GIT_REPOSITORY "https://github.com/google/flatbuffers"
+    GIT_TAG        v2.0.0
+)
+set(FLATBUFFERS_BUILD_FLATC ON CACHE INTERNAL "Enable the build of the flatbuffers compiler")
+set(FLATBUFFERS_BUILD_TESTS OFF CACHE INTERNAL "Enable tests from flatbuffers lib.")
+set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE INTERNAL "Enable the build of flathash")
+set(FLATBUFFERS_ENABLE_PCH OFF CACHE INTERNAL
+       "Enable precompile headers support for 'flatbuffers' and 'flatc'. \"
+        Only work if CMake support 'target_precompile_headers'. \"
+        Only work if CMake supports 'target_precompile_headers'. \"
+        This can speed up compilation time."
+       )
+
+FetchContent_MakeAvailable(flatbuffers)
+
+include_directories(BEFORE SYSTEM "${flatbuffers_SOURCE_DIR}/include")
+
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/channel_generated.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/Source/channel.fbs
+    COMMAND flatc --cpp ${CMAKE_CURRENT_SOURCE_DIR}/Source/channel.fbs
+)
+
+add_custom_target(channelbuffer DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/channel_generated.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+add_dependencies(${PLUGIN_NAME} channelbuffer)
 
 target_include_directories(${PLUGIN_NAME} PUBLIC ${ZMQ_INCLUDE_DIRS})
 target_link_libraries(${PLUGIN_NAME} ${ZMQ_LIBRARIES})
